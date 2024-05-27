@@ -9,8 +9,8 @@ from typing import Any
 from mcap_protobuf.decoder import DecoderFactory
 from mcap.reader import make_reader, McapReader
 import pandas as pd
-
-
+from functools import reduce
+import matplotlib.pyplot as plt
 
 class MCAPMessage:
     def __init__(self, schema, channel, message, proto_msg):
@@ -84,8 +84,6 @@ def get_start_end_times(msg_df: pd.DataFrame, filter_topic: str, topic_attr_name
 
     return list(zip(start_times, end_times))
 
-
-
 def get_min_value(time_series_msgs, attr_name):
     """get the min value in a list or array of time series msgs
 
@@ -98,11 +96,6 @@ def get_min_value(time_series_msgs, attr_name):
     """
     return min(getattr(msg, attr_name) for msg in time_series_msgs)
 
-
-# when braking, our front sus. pots should shorten
-# def analyze_sus_pots(sus_pot_timseries_msgs, ):
-
-
 def get_all_msgs_from_mcap(mcap_reader) -> list[MCAPMessage]:
     msgs = {}
     for schema_, channel_, message_, proto_msg in mcap_reader.iter_decoded_messages():
@@ -110,7 +103,6 @@ def get_all_msgs_from_mcap(mcap_reader) -> list[MCAPMessage]:
             msgs[channel_.topic] = []
         msgs[channel_.topic].append(MCAPMessage(schema_, channel_, message_, proto_msg))
     return msgs
-
 
 def get_topic_msgs_from_mcaps(mcap_readers, topic):
     msgs = []
@@ -120,7 +112,6 @@ def get_topic_msgs_from_mcaps(mcap_readers, topic):
         ):
             msgs.append(proto_msg)
     return msgs
-
 
 def open_files_in_folder(folder_path: str) -> list[McapReader]:
     # Create the full search pattern
@@ -145,11 +136,30 @@ def open_files_in_folder(folder_path: str) -> list[McapReader]:
         except:
             print("error: couldnt open file path: ", file_path)
             pass
-    return mcap_readers
+    return mcap_readers, files
 
+def time_plot_msg_member(df, topic, pb_msg_member):
+    msgs = df[df['topic'] == topic]
+    msgs[pb_msg_member] = msgs['proto_msg'].apply(lambda x: getattr(x, pb_msg_member))
+    msgs.plot(x='log_time', y=pb_msg_member)
+    print(msgs)
+    plt.show()
+    
+# when braking, our front sus. pots should shorten
+def analyze_sus_pots(msgs_df):
+    rear_sus_pot_data = msgs_df[msgs_df['topic'] == 'sab_suspension_data']
+    front_sus_pot_data = msgs_df[msgs_df['topic'] == 'mcu_suspension_data']
+    pedals_data = msgs_df[msgs_df['topic']=='mcu_pedal_readings_data']
+    # print(pedals_data)
+    time_plot_msg_member(msgs_df, 'mcu_suspension_data', 'potentiometer_fr')
+
+def get_important_data_for_times(df, important_times):
+    conditions = [(df["log_time"] >= start) & (df["log_time"] <= end) for start, end in important_times]
+    combined_condition = reduce(lambda x, y: x | y, conditions)
+    return df[combined_condition]
 
 def main():
-    mcap_readers = open_files_in_folder("/home/ben/mcap_analysis/mcaps/raw")
+    mcap_readers, files = open_files_in_folder("/home/ben/mcap_analysis/mcaps/raw")
     # topics = ["mcu_suspension_data", "sab_suspension_data"]
     # for topic in topics:
     # topic = "sab_suspension_data"
@@ -161,8 +171,9 @@ def main():
     for reader in mcap_readers:
         msgs_total = merge_dictionaries(msgs_total, get_all_msgs_from_mcap(reader))
     df = convert_dict_to_pandas_df(msgs_total)
-
-    print(get_start_end_times(df, "mcu_status_data", "ecu_state", "5"))
+    important_times = get_start_end_times(df, "mcu_status_data", "ecu_state", "5")
+    cut_df = get_important_data_for_times(df, important_times)
+    analyze_sus_pots(cut_df)
     # topic = "mcu_suspension_data"
     # msgs = get_topic_msgs_from_mcaps(mcap_readers, topic)
     # print("min potentiometer_fl value for: ", topic, " is: ", get_min_value(msgs, "potentiometer_fl"))
