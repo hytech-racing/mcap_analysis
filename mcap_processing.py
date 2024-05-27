@@ -80,7 +80,10 @@ def get_start_end_times(msg_df: pd.DataFrame, filter_topic: str, topic_attr_name
             end_times.append(transition[0])
 
     if(len(start_times) > len(end_times)):
-        end_times.append(max(msgs[msg_df['log_time']]))
+        print("yo")
+        print(len(start_times))
+        print(len(end_times))
+        end_times.append(max(msg_df[msg_df['log_time']]))
 
     return list(zip(start_times, end_times))
 
