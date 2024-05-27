@@ -142,7 +142,6 @@ def time_plot_msg_member(df, topic, pb_msg_member):
     msgs = df[df['topic'] == topic]
     msgs[pb_msg_member] = msgs['proto_msg'].apply(lambda x: getattr(x, pb_msg_member))
     msgs.plot(x='log_time', y=pb_msg_member)
-    print(msgs)
     plt.show()
     
 # when braking, our front sus. pots should shorten
@@ -152,7 +151,7 @@ def analyze_sus_pots(msgs_df):
     pedals_data = msgs_df[msgs_df['topic']=='mcu_pedal_readings_data']
     # print(pedals_data)
     time_plot_msg_member(msgs_df, 'mcu_suspension_data', 'potentiometer_fr')
-
+    
 def get_important_data_for_times(df, important_times):
     conditions = [(df["log_time"] >= start) & (df["log_time"] <= end) for start, end in important_times]
     combined_condition = reduce(lambda x, y: x | y, conditions)
