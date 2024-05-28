@@ -162,13 +162,7 @@ def get_important_data_for_times(df, important_times):
 
 def main():
     mcap_readers, files = open_files_in_folder("/home/ben/mcap_analysis/mcaps/raw")
-    # topics = ["mcu_suspension_data", "sab_suspension_data"]
-    # for topic in topics:
-    # topic = "sab_suspension_data"
-    # msgs = get_topic_msgs_from_mcaps(mcap_readers, topic)
-    # print("min potentiometer_rl value for: ", topic, " is: ", get_min_value(msgs, "potentiometer_rl"))
-    # msgs = get_topic_msgs_from_mcaps(mcap_readers, topic)
-    # print("min potentiometer_rr value for: ", topic, " is: ", get_min_value(msgs, "potentiometer_rr"))
+    
     msgs_total = {}
     for reader in mcap_readers:
         msgs_total = merge_dictionaries(msgs_total, get_all_msgs_from_mcap(reader))
@@ -176,18 +170,6 @@ def main():
     important_times = get_start_end_times(df, "mcu_status_data", "ecu_state", "5")
     cut_df = get_important_data_for_times(df, important_times)
     analyze_sus_pots(cut_df)
-    # topic = "mcu_suspension_data"
-    # msgs = get_topic_msgs_from_mcaps(mcap_readers, topic)
-    # print("min potentiometer_fl value for: ", topic, " is: ", get_min_value(msgs, "potentiometer_fl"))
-    # msgs = get_topic_msgs_from_mcaps(mcap_readers, topic)
-    # print("min potentiometer_fr value for: ", topic, " is: ", get_min_value(msgs, "potentiometer_fr"))
-
-    # print(mcap_readers)
-    # for schema_, channel_, message_, proto_msg in mcap_readers[0].iter_decoded_messages():
-    #     print(proto_msg)
-    #
-    # for topic_name in topics:
-    #     get_topic_msgs_from_mcaps(mcaps, topic_name)
 
 
 if __name__ == "__main__":
