@@ -16,10 +16,14 @@ class MCAPMessage:
     def __init__(self, schema, channel, message, proto_msg):
         self.schema = schema
         self.channel = channel
-        self.message = message
-        self.proto_msg = proto_msg
+        # self.message = message
         self.log_time = message.log_time
-
+        
+        # Iterate over attributes of proto_msg and set them as attributes of MCAPMessage
+        for attr_name in dir(proto_msg):
+            if not attr_name.startswith("__") and not callable(getattr(proto_msg, attr_name)):
+                setattr(self, attr_name, getattr(proto_msg, attr_name))
+        print(dir(self))
 def merge_dictionaries(*dicts):
     merged_dict = {}
     for dictionary in dicts:
